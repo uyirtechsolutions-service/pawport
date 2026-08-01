@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaw, faArrowRight, faShieldHalved, faHeadset, faTruckFast } from '@fortawesome/free-solid-svg-icons'
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
 const trustBadges = [
   { icon: faShieldHalved, text: 'Licensed & Insured' },
@@ -71,10 +72,13 @@ function Hero() {
                 />
               </Link>
               <a
-                href="#process"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-black/10 hover:border-black/20 text-black/70 font-semibold text-xs rounded-xl hover:text-black hover:-translate-y-0.5 transition-all duration-300"
+                href="https://wa.me/919087470137"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#25D366] hover:bg-[#22c15e] text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
               >
-                How it works
+                <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
+                WhatsApp
               </a>
             </div>
 
