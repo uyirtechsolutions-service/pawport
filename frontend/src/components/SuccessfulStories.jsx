@@ -15,6 +15,17 @@ const stories = [
   { title: 'Labrador Puppy — Pune to Delhi', date: 'Nov 2024', desc: 'Gentle handling for 3-month-old pup, vet-checked at pickup, wellness follow-up.', mode: 'Ground', pet: '🐶 Large' }
 ]
 
+const galleryImages = [
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-1.jpeg', alt: 'Happy pet reunion 1' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-2.jpeg', alt: 'Happy pet reunion 2' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-3.jpeg', alt: 'Happy pet reunion 3' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-4.jpeg', alt: 'Happy pet reunion 4' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-5.jpeg', alt: 'Happy pet reunion 5' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-6.jpeg', alt: 'Happy pet reunion 6' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-7.jpeg', alt: 'Happy pet reunion 7' },
+  { src: 'https://raw.githubusercontent.com/uyirtechsolutions-service/pawport/main/images/story-8.jpeg', alt: 'Happy pet reunion 8' }
+]
+
 function SuccessfulStories() {
   return (
     <section id="stories" className="py-12 md:py-16 px-6 md:px-12">
@@ -45,6 +56,24 @@ function SuccessfulStories() {
               </div>
               <h3 className="font-space font-bold text-black text-sm mb-1">{s.title}</h3>
               <p className="text-[11px] text-pawport-muted leading-relaxed">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center max-w-2xl mx-auto space-y-3 pt-4">
+          <h3 className="text-xl md:text-2xl font-extrabold tracking-tight font-space text-black">Our happy clients</h3>
+          <p className="text-pawport-muted text-sm">Moments of joy—pets reunited with their families.</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {galleryImages.map((img, i) => (
+            <div key={i} className="group relative overflow-hidden rounded-2xl shadow-card border border-pawport-orange/10 aspect-square hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300">
+              <img
+                src={img.src}
+                alt={img.alt}
+                loading="lazy"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           ))}
         </div>
