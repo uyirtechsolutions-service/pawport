@@ -11,8 +11,8 @@ const trips = [
 
 function Transports() {
   return (
-    <section id="transports" className="py-12 md:py-16 px-6 md:px-12 bg-white">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <section id="transports" className="py-8 md:py-10 lg:py-10 px-6 md:px-12 bg-white">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pawport-orange/20 text-pawport-orange rounded-full text-[11px] font-bold uppercase tracking-widest">
             <FontAwesomeIcon icon={faShuttleVan} className="w-3 h-3" /> Recent Trips

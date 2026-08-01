@@ -28,9 +28,9 @@ const galleryImages = [
 
 function SuccessfulStories() {
   return (
-    <section id="stories" className="py-12 md:py-16 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
+    <section id="stories" className="py-8 md:py-10 lg:py-10 px-6 md:px-12">
+      <div className="max-w-7xl mx-auto space-y-5">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pawport-orange/20 text-pawport-orange rounded-full text-[11px] font-bold uppercase tracking-widest">
             <FontAwesomeIcon icon={faStar} className="w-3 h-3" /> Since 2020
           </span>
@@ -60,9 +60,9 @@ function SuccessfulStories() {
           ))}
         </div>
 
-        <div className="text-center max-w-2xl mx-auto space-y-3 pt-4">
-          <h3 className="text-xl md:text-2xl font-extrabold tracking-tight font-space text-black">Our happy clients</h3>
-          <p className="text-pawport-muted text-sm">Moments of joy—pets reunited with their families.</p>
+        <div className="text-center max-w-2xl mx-auto space-y-1 pt-2">
+          <h3 className="text-lg md:text-xl font-extrabold tracking-tight font-space text-black">Our happy clients</h3>
+          <p className="text-pawport-muted text-xs">Moments of joy—pets reunited with their families.</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {galleryImages.map((img, i) => (

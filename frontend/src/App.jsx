@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import MobileBottomNav from './components/MobileBottomNav'
 import ScrollToTop from './components/ScrollToTop'
 import HomePage from './pages/HomePage'
 import ServicesPage from './pages/ServicesPage'
@@ -10,7 +11,7 @@ import BookingPage from './pages/BookingPage'
 
 function App() {
   return (
-<div className="min-h-screen bg-white text-black antialiased flex flex-col">
+<div className="min-h-screen bg-white text-black antialiased flex flex-col pb-16 md:pb-0">
       <ScrollToTop />
       <Header />
       <main className="flex-grow">
@@ -23,6 +24,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      <MobileBottomNav />
     </div>
   )
 }
