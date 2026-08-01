@@ -5,7 +5,6 @@ import Fleet from '../components/Fleet'
 import Philosophy from '../components/Philosophy'
 import Transports from '../components/Transports'
 import SuccessfulStories from '../components/SuccessfulStories'
-import BookingForm from '../components/BookingForm'
 
 function HomePage() {
   return (
@@ -17,7 +16,6 @@ function HomePage() {
       <Philosophy />
       <SuccessfulStories />
       <Transports />
-      <BookingForm />
     </>
   )
 }
