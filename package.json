@@ -1,0 +1,13 @@
+{
+  "name": "pawport-transport",
+  "version": "1.0.0",
+  "description": "Pawport Transport – Pet transportation service (frontend + backend)",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently -n BE,FE -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
