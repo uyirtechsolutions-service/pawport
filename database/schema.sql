@@ -63,6 +63,18 @@ CREATE TABLE service_tags (
 );
 
 -- ============================================
+-- REVIEWS TABLE
+-- ============================================
+CREATE TABLE reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  customer_name VARCHAR(255) NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT NOT NULL,
+  is_approved BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- HANDLERS TABLE
 -- ============================================
 CREATE TABLE handlers (
