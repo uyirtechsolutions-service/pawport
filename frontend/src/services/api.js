@@ -52,4 +52,10 @@ export const transportService = {
   getService: (id) => api.get(`/services/${id}`)
 }
 
+// Reviews Service
+export const reviewService = {
+  getReviews: () => api.get('/reviews'),
+  submitReview: (data) => api.post('/reviews', data)
+}
+
 export default api
