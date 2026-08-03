@@ -1,0 +1,18 @@
+{
+  "/api/auth/login/route": "/api/auth/login",
+  "/_not-found/page": "/_not-found",
+  "/api/auth/profile/route": "/api/auth/profile",
+  "/api/auth/register/route": "/api/auth/register",
+  "/api/bookings/route": "/api/bookings",
+  "/api/health/route": "/api/health",
+  "/api/bookings/[id]/route": "/api/bookings/[id]",
+  "/api/orders/route": "/api/orders",
+  "/api/reviews/route": "/api/reviews",
+  "/api/services/route": "/api/services",
+  "/api/services/[id]/route": "/api/services/[id]",
+  "/book/page": "/book",
+  "/stories/page": "/stories",
+  "/services/page": "/services",
+  "/page": "/",
+  "/process/page": "/process"
+}
