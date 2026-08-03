@@ -5,7 +5,6 @@ import Fleet from '../components/Fleet'
 import Transports from '../components/Transports'
 import SuccessfulStories from '../components/SuccessfulStories'
 import Philosophy from '../components/Philosophy'
-import CustomerReviews from '../components/CustomerReviews'
 
 function HomePage() {
   return (
@@ -48,11 +47,6 @@ function HomePage() {
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pawport-orange/10 to-transparent" />
         <Philosophy />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pawport-orange/10 to-transparent" />
-      </section>
-
-      {/* Customer Reviews - Ratings & Feedback */}
-      <section className="relative bg-white">
-        <CustomerReviews />
       </section>
 
       {/* Compact CTA Bar */}
