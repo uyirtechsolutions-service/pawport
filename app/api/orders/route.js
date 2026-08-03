@@ -47,7 +47,22 @@ async function deleteImage(filePath) {
 
 async function sendGupshup(destination, templateId, params, imageUrl) {
   const cleanNumber = destination.replace(/[^0-9]/g, '')
-  const template = { id: templateId, params }
+  
+  // Build template object based on Gupshup API format
+  // For templates with image header, include header with image URL
+  const template = { 
+    id: templateId, 
+    params: params  // body params as array
+  }
+  
+  // If there's an image (for transporter template with image header)
+  if (imageUrl) {
+    template.header = {
+      type: 'image',
+      url: imageUrl,
+    }
+  }
+  
   const body = new URLSearchParams()
   body.append('channel', 'whatsapp')
   body.append('source', GUPSHUP_SOURCE)
@@ -55,22 +70,28 @@ async function sendGupshup(destination, templateId, params, imageUrl) {
   body.append('src.name', GUPSHUP_APP)
   body.append('template', JSON.stringify(template))
 
-  if (imageUrl) {
-    body.append('message', JSON.stringify({
-      type: 'image',
-      originalUrl: imageUrl,
-      previewUrl: imageUrl,
-    }))
+  try {
+    const response = await axios.post(GUPSHUP_API, body.toString(), {
+      headers: {
+        'apikey': GUPSHUP_API_KEY,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+
+    return response.data
+  } catch (error) {
+    // Capture full error details from Gupshup API
+    const errorDetails = {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      requestBody: body.toString(),
+      templateSent: JSON.stringify(template),
+    }
+    console.error('Gupshup API error details:', JSON.stringify(errorDetails, null, 2))
+    throw new Error(`Gupshup API error: ${error.response?.status} - ${JSON.stringify(error.response?.data || error.message)}`)
   }
-
-  const response = await axios.post(GUPSHUP_API, body.toString(), {
-    headers: {
-      'apikey': GUPSHUP_API_KEY,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  })
-
-  return response.data
 }
 
 export async function POST(request) {
