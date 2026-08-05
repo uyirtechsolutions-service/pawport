@@ -39,7 +39,7 @@ function BookingForm() {
   const [form, setForm] = useState({
     petType: '', petName: '', petBreed: '', petAge: '', petWeight: '', petDetails: '',
     pickupPlace: '', dropoffPlace: '', bookingDate: '', preferredTime: '', transportMode: '',
-    buyerName: '', buyerWhatsapp: '',
+    buyerName: '', buyerWhatsapp: '+91',
   })
 
   const update = (field, value) => setForm(f => ({ ...f, [field]: value }))
@@ -61,7 +61,7 @@ function BookingForm() {
     if (step === 2) {
       if (!form.buyerName) return 'Please enter your name'
       if (!form.buyerWhatsapp) return 'Please enter WhatsApp number'
-      if (!/^[+]?[\d\s-]{10,15}$/.test(form.buyerWhatsapp)) return 'Please enter a valid phone number'
+      if (!/^\+91\d{10}$/.test(form.buyerWhatsapp)) return 'Please enter a valid 10-digit mobile number'
       return null
     }
     return null
@@ -143,7 +143,7 @@ function BookingForm() {
 
       showToast('Booking sent! Check your WhatsApp for confirmation.', 'success')
       setShowConfirmation(true)
-      setForm({ petType: '', petName: '', petBreed: '', petAge: '', petWeight: '', petDetails: '', pickupPlace: '', dropoffPlace: '', bookingDate: '', preferredTime: '', transportMode: '', buyerName: '', buyerWhatsapp: '' })
+      setForm({ petType: '', petName: '', petBreed: '', petAge: '', petWeight: '', petDetails: '', pickupPlace: '', dropoffPlace: '', bookingDate: '', preferredTime: '', transportMode: '', buyerName: '', buyerWhatsapp: '+91' })
       setPetImage(null)
       setPreviewUrl('')
       setStep(0)
@@ -329,7 +329,21 @@ function BookingForm() {
                 </div>
                 <div>
                   <label htmlFor="buyerWhatsapp" className={LabelClass}>WhatsApp Number *</label>
-                  <input id="buyerWhatsapp" type="tel" value={form.buyerWhatsapp} onChange={e => update('buyerWhatsapp', e.target.value)} placeholder="+91 98765 43210" className={InputClass} />
+                  <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-pawport-orange transition-colors bg-white">
+                    <span className="px-3 py-3 bg-gray-50 text-black font-bold text-sm border-r-2 border-gray-200 select-none">+91</span>
+                    <input
+                      id="buyerWhatsapp"
+                      type="tel"
+                      value={form.buyerWhatsapp.replace(/^\+91/, '')}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                        update('buyerWhatsapp', '+91' + digits)
+                      }}
+                      placeholder="98765 43210"
+                      maxLength={10}
+                      className="flex-1 px-3 py-3 text-black placeholder-gray-400 focus:outline-none text-sm font-body bg-white"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="bg-pawport-orange/5 border border-pawport-orange/15 rounded-xl p-4">

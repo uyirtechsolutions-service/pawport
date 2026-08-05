@@ -176,7 +176,7 @@ export async function POST(request) {
     console.log('Transporter image URL:', transporterImageUrl)
 
     // Send WhatsApp messages
-    const results = { transporter: null, buyer: null }
+    const results = { transporter: null, buyer: null, transporterError: null, buyerError: null }
 
     if (GUPSHUP_TPL_TRANSPORTER) {
       try {
@@ -203,6 +203,7 @@ export async function POST(request) {
       } catch (e) {
         console.error('Transporter message failed:', e.message)
         results.transporter = 'failed'
+        results.transporterError = e.message
       }
     }
 
@@ -217,6 +218,7 @@ export async function POST(request) {
       } catch (e) {
         console.error('Buyer message failed:', e.message)
         results.buyer = 'failed'
+        results.buyerError = e.message
       }
     }
 
@@ -224,8 +226,10 @@ export async function POST(request) {
 
     return NextResponse.json({
       message: 'Booking sent',
-      transporter: results.transporter ? 'sent' : 'skipped',
-      buyer: results.buyer ? 'sent' : 'skipped',
+      transporter: results.transporter ? 'sent' : 'failed',
+      buyer: results.buyer ? 'sent' : 'failed',
+      transporterError: results.transporterError || null,
+      buyerError: results.buyerError || null,
     })
   } catch (error) {
     console.error('Order failed:', error.message)
