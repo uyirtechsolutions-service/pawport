@@ -101,6 +101,19 @@ CREATE TABLE tracking_updates (
 );
 
 -- ============================================
+-- PET IMAGES TABLE (for tracking image URLs)
+-- ============================================
+CREATE TABLE pet_images (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id VARCHAR(255),
+  image_url VARCHAR(1000) NOT NULL,
+  storage_path VARCHAR(500) NOT NULL,
+  buyer_whatsapp VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  cleared_at TIMESTAMP WITH TIME ZONE
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 CREATE INDEX idx_bookings_user_id ON bookings(user_id);
@@ -108,6 +121,8 @@ CREATE INDEX idx_bookings_status ON bookings(status);
 CREATE INDEX idx_bookings_date ON bookings(booking_date);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_tracking_booking_id ON tracking_updates(booking_id);
+CREATE INDEX idx_pet_images_created_at ON pet_images(created_at);
+CREATE INDEX idx_pet_images_cleared_at ON pet_images(cleared_at);
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -115,6 +130,12 @@ CREATE INDEX idx_tracking_booking_id ON tracking_updates(booking_id);
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tracking_updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_images ENABLE ROW LEVEL SECURITY;
+
+-- pet_images: only accessible via service role key (backend)
+-- No public access - deny all for anon and authenticated users
+CREATE POLICY "Deny public access to pet_images" ON pet_images
+  FOR ALL USING (false);
 
 -- Users can read their own data
 CREATE POLICY "Users read own data" ON users

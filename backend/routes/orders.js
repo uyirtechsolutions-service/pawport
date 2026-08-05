@@ -19,11 +19,12 @@ const upload = multer({
   },
 })
 
-// Supabase — storage only for temporary public URL
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || ''
-)
+// Supabase configuration
+const SUPABASE_URL = process.env.SUPABASE_URL || ''
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || ''
+
+// Supabase client for storage operations
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 // Gupshup config
 const GUPSHUP_API = 'https://api.gupshup.io/wa/api/v1/template/msg'
@@ -34,7 +35,7 @@ const GUPSHUP_TPL_TRANSPORTER = process.env.GUPSHUP_TEMPLATE_TRANSPORTER || '' /
 const GUPSHUP_TPL_BUYER = process.env.GUPSHUP_TEMPLATE_BUYER || ''             // template text-only + 7 params
 const TRANSPORTER_WHATSAPP = '919087470137'
 
-// Upload image to Supabase Storage temporarily (just to get public URL for Gupshup)
+// Upload image to Supabase Storage and get signed URL (works with private buckets)
 async function getPublicUrl(file) {
   const ext = path.extname(file.originalname).toLowerCase()
   const fileName = `pet-photos/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
@@ -48,16 +49,88 @@ async function getPublicUrl(file) {
 
   if (error) throw new Error(`Image upload failed: ${error.message}`)
 
-  const { data } = supabase.storage.from('pet-images').getPublicUrl(fileName)
-  return { url: data.publicUrl, path: fileName }
+  // Create a signed URL valid for 30 days (works with private buckets)
+  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+    .from('pet-images')
+    .createSignedUrl(fileName, 60 * 60 * 24 * 30) // 30 days in seconds
+
+  if (signedUrlError) {
+    console.warn('Signed URL creation failed, falling back to public URL:', signedUrlError.message)
+    // Fallback to public URL if signed URL fails
+    const { data } = supabase.storage.from('pet-images').getPublicUrl(fileName)
+    return { url: data.publicUrl, path: fileName }
+  }
+
+  return { url: signedUrlData.signedUrl, path: fileName }
 }
 
-// Delete image from Supabase Storage after sending
-async function deleteImage(filePath) {
+// Save image URL to database using direct REST API call (more reliable)
+async function saveImageUrlToDb(imageUrl, storagePath, buyerWhatsapp) {
+  console.log('Attempting to save image URL to DB:', { 
+    imageUrl: imageUrl?.substring(0, 50) + '...', 
+    storagePath, 
+    buyerWhatsapp,
+    supabaseUrl: SUPABASE_URL 
+  })
+  
   try {
-    await supabase.storage.from('pet-images').remove([filePath])
+    // Use direct REST API call to Supabase
+    const response = await axios.post(
+      `${SUPABASE_URL}/rest/v1/pet_images`,
+      {
+        image_url: imageUrl,
+        storage_path: storagePath,
+        buyer_whatsapp: buyerWhatsapp,
+        created_at: new Date().toISOString()
+      },
+      {
+        headers: {
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        }
+      }
+    )
+    
+    console.log('Image URL saved to DB successfully via REST API:', response.data)
+    return { success: true, data: response.data }
   } catch (e) {
-    console.warn('Image cleanup warning:', e.message)
+    console.error('Error saving image URL to DB via REST API:', {
+      message: e.message,
+      status: e.response?.status,
+      statusText: e.response?.statusText,
+      data: e.response?.data,
+      requestData: {
+        image_url: imageUrl,
+        storage_path: storagePath,
+        buyer_whatsapp: buyerWhatsapp
+      }
+    })
+    return { success: false, error: e.message, details: e.response?.data }
+  }
+}
+
+// Clear image URLs from database after 30 days (but keep images in storage)
+async function clearOldImageUrlsFromDb() {
+  try {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    const { data, error } = await supabase
+      .from('pet_images')
+      .update({ cleared_at: new Date().toISOString() })
+      .is('cleared_at', null)
+      .lt('created_at', thirtyDaysAgo.toISOString())
+      .select('id')
+    
+    if (error) {
+      console.warn('Failed to clear old image URLs from DB:', error.message)
+    } else if (data && data.length > 0) {
+      console.log(`Cleared ${data.length} old image URLs from DB (images remain in storage)`)
+    }
+  } catch (e) {
+    console.warn('Error clearing old image URLs from DB:', e.message)
   }
 }
 
@@ -65,33 +138,36 @@ async function deleteImage(filePath) {
 async function sendGupshup(destination, templateId, params, imageUrl) {
   const cleanNumber = destination.replace(/[^0-9]/g, '')
   
-  // Build template object based on Gupshup API format
-  // For templates with image header, include header with image URL
-  const template = { 
-    id: templateId, 
-    params: params  // body params as array
+  // Build template params according to Gupshup WhatsApp Template API v1 format
+  // Body params as simple array of strings
+  const templateParams = {
+    body: params.map(p => String(p))
   }
   
   // If there's an image (for transporter template with image header)
   if (imageUrl) {
-    template.header = {
-      type: 'image',
-      url: imageUrl,
-    }
+    templateParams.header = [{ type: 'image', url: imageUrl }]
   }
   
-  const body = new URLSearchParams()
-  body.append('channel', 'whatsapp')
-  body.append('source', GUPSHUP_SOURCE)
-  body.append('destination', cleanNumber)
-  body.append('src.name', GUPSHUP_APP)
-  body.append('template', JSON.stringify(template))
+  const template = { 
+    id: templateId, 
+    params: templateParams
+  }
+  
+  // Build request payload
+  const payload = {
+    channel: 'whatsapp',
+    source: GUPSHUP_SOURCE,
+    destination: cleanNumber,
+    'src.name': GUPSHUP_APP,
+    template: template
+  }
 
   try {
-    const response = await axios.post(GUPSHUP_API, body.toString(), {
+    const response = await axios.post(GUPSHUP_API, payload, {
       headers: {
         'apikey': GUPSHUP_API_KEY,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
     })
 
@@ -103,8 +179,7 @@ async function sendGupshup(destination, templateId, params, imageUrl) {
       statusText: error.response?.statusText,
       data: error.response?.data,
       message: error.message,
-      requestBody: body.toString(),
-      templateSent: JSON.stringify(template),
+      requestPayload: JSON.stringify(payload, null, 2),
     }
     console.error('Gupshup API error details:', JSON.stringify(errorDetails, null, 2))
     throw new Error(`Gupshup API error: ${error.response?.status} - ${JSON.stringify(error.response?.data || error.message)}`)
@@ -191,10 +266,15 @@ router.post('/', upload.single('petImage'), async (req, res) => {
       }
     }
 
-    // Delete image from Supabase immediately
-    if (imageFilePath) {
-      deleteImage(imageFilePath)
+    // Save image URL to database (don't delete from storage)
+    // Image will remain in Supabase storage, URL will be cleared from DB after 30 days
+    if (imageUrl && imageFilePath) {
+      await saveImageUrlToDb(imageUrl, imageFilePath, buyerWhatsapp)
     }
+    
+    // Run cleanup of old image URLs from DB (30+ days old)
+    // This only clears the DB records, images remain in storage
+    await clearOldImageUrlsFromDb()
 
     res.status(200).json({
       message: 'Booking sent',

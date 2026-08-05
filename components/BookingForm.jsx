@@ -1,11 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaw, faHeart, faArrowLeft, faArrowRight, faPaperPlane, faCheckCircle, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 import dayjs from 'dayjs'
 import LocationAutocomplete from './LocationAutocomplete'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 const PET_TYPES = ['🐕 Dog', '🐱 Cat', 'Other']
 const TIME_SLOTS = ['Early Morning (6 – 9 AM)', 'Morning (9 AM – 12 PM)', 'Afternoon (12 – 4 PM)', 'Evening (4 – 8 PM)', 'Flexible — anytime']
@@ -89,25 +95,44 @@ function BookingForm() {
     setSubmitting(true)
 
     try {
-      const fd = new FormData()
-      fd.append('buyerName', form.buyerName)
-      fd.append('buyerWhatsapp', form.buyerWhatsapp)
-      fd.append('petName', form.petName)
-      fd.append('petType', form.petType)
-      fd.append('petBreed', form.petBreed)
-      fd.append('petAge', form.petAge)
-      fd.append('petWeight', form.petWeight)
-      fd.append('petDetails', form.petDetails)
-      fd.append('pickupPlace', form.pickupPlace)
-      fd.append('dropoffPlace', form.dropoffPlace)
-      fd.append('bookingDate', form.bookingDate)
-      fd.append('preferredTime', form.preferredTime)
-      fd.append('transportMode', form.transportMode)
-      if (petImage) fd.append('petImage', petImage)
+      // Upload image directly to Supabase Storage from the browser
+      // This gives us a plain public https:// URL — no base64 needed
+      let petImageUrl = null
+      if (petImage) {
+        const ext = petImage.name.split('.').pop().toLowerCase()
+        const fileName = `pet-photos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('pet-images')
+          .upload(fileName, petImage, { contentType: petImage.type, upsert: false })
+
+        if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`)
+
+        const { data } = supabase.storage.from('pet-images').getPublicUrl(fileName)
+        petImageUrl = data.publicUrl
+      }
+
+      const payload = {
+        buyerName: form.buyerName,
+        buyerWhatsapp: form.buyerWhatsapp,
+        petName: form.petName,
+        petType: form.petType,
+        petBreed: form.petBreed,
+        petAge: form.petAge,
+        petWeight: form.petWeight,
+        petDetails: form.petDetails,
+        pickupPlace: form.pickupPlace,
+        dropoffPlace: form.dropoffPlace,
+        bookingDate: form.bookingDate,
+        preferredTime: form.preferredTime,
+        transportMode: form.transportMode,
+        petImageUrl,  // plain public URL e.g. https://...supabase.co/.../pet-photos/xxx.jpg
+      }
 
       const res = await fetch('/api/orders', {
         method: 'POST',
-        body: fd,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json().catch(() => ({}))

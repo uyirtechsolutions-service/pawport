@@ -13,19 +13,23 @@ User fills booking form + uploads pet photo → clicks Submit
 Frontend POSTs FormData (image + text) to backend /api/orders
         │
         ▼
-Backend uploads image to Supabase → gets public URL (temporary)
+Backend uploads image to Supabase → gets signed URL (valid for 30 days)
         │
         ├─► Sends TEMPLATE 1 to TRANSPORTER (+91 90874 70137)
-        │      Header: pet photo image
+        │      Header: pet photo image (via signed URL)
         │      Body: 13 params (all booking + customer details)
         │
         ├─► Sends TEMPLATE 2 to BUYER (their WhatsApp number)
         │      Body: 7 params (confirmation summary)
         │
-        └─► Deletes image from Supabase immediately
+        ├─► Saves image URL to database (pet_images table)
+        │
+        └─► After 30 days: clears URL from DB (image remains in storage)
 ```
 
 **Both receive WhatsApp messages automatically via Gupshup. No wa.me links. No manual steps.**
+
+**Note:** Images are stored in Supabase with signed URLs (works with private buckets). Image URLs are tracked in the database and cleared after 30 days, but the actual images remain in storage.
 
 ---
 
