@@ -1,17 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPaw, faHeart, faArrowLeft, faArrowRight, faPaperPlane, faCheckCircle, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { faPaw, faHeart, faArrowLeft, faArrowRight, faPaperPlane, faCheckCircle } from '@fortawesome/free-solid-svg-icons'
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 import dayjs from 'dayjs'
 import LocationAutocomplete from './LocationAutocomplete'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
 
 const PET_TYPES = ['🐕 Dog', '🐱 Cat', 'Other']
 const TIME_SLOTS = ['Early Morning (6 – 9 AM)', 'Morning (9 AM – 12 PM)', 'Afternoon (12 – 4 PM)', 'Evening (4 – 8 PM)', 'Flexible — anytime']
@@ -26,8 +20,7 @@ const STEPS = [
 function BookingForm() {
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
-  const [petImage, setPetImage] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState('')
+  const [submitStage, setSubmitStage] = useState(0) // 0=idle, 1=sending, 2=done
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [toast, setToast] = useState(null)
 
@@ -47,7 +40,6 @@ function BookingForm() {
   const validateStep = () => {
     if (step === 0) {
       if (!form.petType) return 'Please select pet type'
-      if (!petImage) return 'Please upload a pet photo'
       return null
     }
     if (step === 1) {
@@ -78,40 +70,14 @@ function BookingForm() {
 
   const prevStep = () => { if (step > 0) setStep(step - 1) }
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) { showToast('Only image files are allowed'); return }
-    if (file.size / 1024 / 1024 > 5) { showToast('Image must be smaller than 5MB'); return }
-    setPetImage(file)
-    const reader = new FileReader()
-    reader.onload = (ev) => setPreviewUrl(ev.target.result)
-    reader.readAsDataURL(file)
-  }
-
   const handleSubmit = async () => {
     const err = validateStep()
     if (err) { showToast(err); return }
+
     setSubmitting(true)
+    setSubmitStage(1) // sending
 
     try {
-      // Upload image directly to Supabase Storage from the browser
-      // This gives us a plain public https:// URL — no base64 needed
-      let petImageUrl = null
-      if (petImage) {
-        const ext = petImage.name.split('.').pop().toLowerCase()
-        const fileName = `pet-photos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('pet-images')
-          .upload(fileName, petImage, { contentType: petImage.type, upsert: false })
-
-        if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`)
-
-        const { data } = supabase.storage.from('pet-images').getPublicUrl(fileName)
-        petImageUrl = data.publicUrl
-      }
-
       const payload = {
         buyerName: form.buyerName,
         buyerWhatsapp: form.buyerWhatsapp,
@@ -126,7 +92,6 @@ function BookingForm() {
         bookingDate: form.bookingDate,
         preferredTime: form.preferredTime,
         transportMode: form.transportMode,
-        petImageUrl,  // plain public URL e.g. https://...supabase.co/.../pet-photos/xxx.jpg
       }
 
       const res = await fetch('/api/orders', {
@@ -136,28 +101,72 @@ function BookingForm() {
       })
 
       const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Failed to submit booking')
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to submit booking')
-      }
+      setSubmitStage(2) // done
+      await new Promise(r => setTimeout(r, 800))
 
-      showToast('Booking sent! Check your WhatsApp for confirmation.', 'success')
       setShowConfirmation(true)
-      setForm({ petType: '', petName: '', petBreed: '', petAge: '', petWeight: '', petDetails: '', pickupPlace: '', dropoffPlace: '', bookingDate: '', preferredTime: '', transportMode: '', buyerName: '', buyerWhatsapp: '+91' })
-      setPetImage(null)
-      setPreviewUrl('')
+      setForm({
+        petType: '', petName: '', petBreed: '', petAge: '', petWeight: '', petDetails: '',
+        pickupPlace: '', dropoffPlace: '', bookingDate: '', preferredTime: '', transportMode: '',
+        buyerName: '', buyerWhatsapp: '+91',
+      })
       setStep(0)
     } catch (err) {
       console.error('Submit failed:', err)
       showToast(err.message || 'Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
+      setSubmitStage(0)
     }
   }
 
   const InputClass = "w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-black placeholder-gray-400 focus:border-pawport-orange focus:outline-none transition-colors text-sm font-body"
   const LabelClass = "block text-xs font-bold uppercase tracking-wider text-black mb-1.5 font-body"
   const SelectClass = "w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-black focus:border-pawport-orange focus:outline-none transition-colors text-sm font-body appearance-none cursor-pointer"
+
+  // Processing overlay
+  const STAGES = [
+    null,
+    { emoji: '📲', label: 'Sending via WhatsApp…', sub: 'Please wait a moment' },
+    { emoji: '✅', label: 'Booking confirmed!',     sub: 'Check your WhatsApp shortly' },
+  ]
+  const stage = STAGES[submitStage]
+
+  if (submitting && stage) {
+    return (
+      <section className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center px-6">
+        <div className="text-center space-y-6 max-w-xs w-full">
+          <div className="text-6xl animate-bounce">{stage.emoji}</div>
+
+          <div className="flex justify-center gap-2">
+            {[1, 2].map(i => (
+              <div
+                key={i}
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  submitStage >= i ? 'w-8 bg-pawport-orange' : 'w-2 bg-gray-200'
+                }`}
+              />
+            ))}
+          </div>
+
+          <div>
+            <p className="text-lg font-extrabold font-space text-black">{stage.label}</p>
+            <p className="text-sm text-pawport-muted mt-1">{stage.sub}</p>
+          </div>
+
+          {submitStage < 2 && (
+            <div className="flex justify-center">
+              <div className="w-8 h-8 border-4 border-pawport-orange border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400">Please don't close this page</p>
+        </div>
+      </section>
+    )
+  }
 
   if (showConfirmation) {
     return (
@@ -166,7 +175,7 @@ function BookingForm() {
           <FontAwesomeIcon icon={faCheckCircle} className="text-6xl text-pawport-orange" />
           <div>
             <h2 className="text-2xl font-extrabold font-space text-black mb-2">Booking Sent! 🎉</h2>
-            <p className="text-sm text-pawport-muted">Your booking details have been sent to the transporter and a confirmation has been sent to your WhatsApp. Check your WhatsApp!</p>
+            <p className="text-sm text-pawport-muted">Your booking details have been sent. You'll receive a WhatsApp confirmation shortly.</p>
           </div>
           <button
             onClick={() => setShowConfirmation(false)}
@@ -185,22 +194,21 @@ function BookingForm() {
       {toast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] animate-bounce">
           <div className={`flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-bold ${
-            toast.type === 'success'
-              ? 'bg-green-500 text-white'
-              : 'bg-pawport-orange text-black'
+            toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-pawport-orange text-black'
           }`}>
             <span>{toast.type === 'success' ? '✓' : '⚠'}</span>
             <span>{toast.message}</span>
           </div>
         </div>
       )}
+
       <div className="max-w-lg md:max-w-3xl mx-auto w-full md:h-full md:py-4 md:px-6 md:flex md:flex-col">
         {/* Header */}
         <div className="text-center mb-6 md:mb-2 md:shrink-0">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pawport-orange/20 text-pawport-orange rounded-full text-[11px] font-bold uppercase tracking-widest mb-2 md:mb-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pawport-orange/20 text-pawport-orange rounded-full text-[11px] font-bold uppercase tracking-widest mb-2">
             <FontAwesomeIcon icon={faHeart} className="w-3 h-3" /> Book Now
           </span>
-          <h2 className="text-2xl md:text-2xl font-extrabold tracking-tight font-space text-black mb-1">
+          <h2 className="text-2xl font-extrabold tracking-tight font-space text-black mb-1">
             Ready to move your best friend?
           </h2>
           <p className="text-sm text-pawport-muted">3 simple steps. We'll send your booking via WhatsApp.</p>
@@ -223,6 +231,7 @@ function BookingForm() {
 
         {/* Step Content */}
         <div className="space-y-4 md:flex-1 md:overflow-y-auto md:min-h-0">
+
           {/* STEP 0: Pet Info */}
           {step === 0 && (
             <div className="space-y-3">
@@ -253,26 +262,9 @@ function BookingForm() {
                   <input id="petWeight" type="text" value={form.petWeight} onChange={e => update('petWeight', e.target.value)} placeholder="15 kg" className={InputClass} />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
-                <div>
-                  <label htmlFor="petDetails" className={LabelClass}>Pet Details</label>
-                  <textarea id="petDetails" value={form.petDetails} onChange={e => update('petDetails', e.target.value)} placeholder="Temperament, medical needs..." className={`${InputClass} resize-none h-24`} />
-                </div>
-                <div>
-                  <label className={LabelClass}>Pet Photo *</label>
-                  {previewUrl ? (
-                    <div className="relative inline-block">
-                      <img src={previewUrl} alt="Preview" className="w-24 h-24 object-cover rounded-xl border-2 border-pawport-orange" />
-                      <button onClick={() => { setPetImage(null); setPreviewUrl('') }} className="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full text-xs flex items-center justify-center">×</button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-pawport-orange transition-colors">
-                      <FontAwesomeIcon icon={faUpload} className="text-gray-400 text-lg" />
-                      <span className="text-xs text-gray-400">Click to upload photo</span>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  )}
-                </div>
+              <div>
+                <label htmlFor="petDetails" className={LabelClass}>Pet Details</label>
+                <textarea id="petDetails" value={form.petDetails} onChange={e => update('petDetails', e.target.value)} placeholder="Temperament, medical needs, special instructions…" className={`${InputClass} resize-none h-24`} />
               </div>
             </div>
           )}
@@ -349,7 +341,7 @@ function BookingForm() {
               <div className="bg-pawport-orange/5 border border-pawport-orange/15 rounded-xl p-4">
                 <p className="text-xs text-pawport-muted leading-relaxed">
                   <FontAwesomeIcon icon={faPaw} className="text-pawport-orange mr-1" />
-                  Your booking details and pet photo will be sent directly to the transporter via WhatsApp. You'll receive a confirmation shortly.
+                  Your booking details will be sent to the transporter via WhatsApp. You'll receive a confirmation shortly.
                 </p>
               </div>
             </div>
@@ -374,7 +366,7 @@ function BookingForm() {
           ) : (
             <button onClick={handleSubmit} disabled={submitting} className="inline-flex items-center gap-2 px-6 py-3 bg-pawport-orange hover:bg-pawport-orange-dark text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all ml-auto disabled:opacity-50">
               <FontAwesomeIcon icon={faWhatsapp} className="w-3.5 h-3.5" />
-              {submitting ? 'Sending...' : 'Send via WhatsApp'}
+              {submitting ? 'Sending…' : 'Send via WhatsApp'}
             </button>
           )}
         </div>
