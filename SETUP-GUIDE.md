@@ -4,6 +4,22 @@ Follow these steps in order to get the booking system working.
 
 ---
 
+## Google Indexing and SEO
+
+The Next.js site serves `/robots.txt` and `/sitemap.xml` automatically. Before deploying to production, set `NEXT_PUBLIC_SITE_URL` in the hosting environment to the canonical public origin, including `https://` and without a trailing slash (for example, `https://www.example.com`). This value is used for canonical URLs and the sitemap. Do not use a preview deployment URL.
+
+After deployment:
+
+1. Open `https://your-domain/robots.txt` and confirm it lists the sitemap and blocks `/api/`.
+2. Open `https://your-domain/sitemap.xml` and confirm it lists the homepage, services, process, and stories pages.
+3. In Google Search Console, add and verify the domain property using its DNS TXT record. Make the client the owner and add your account as a full user.
+4. In Search Console, submit `sitemap.xml`, then inspect the homepage and `/services` and request indexing if they are not indexed.
+5. Check Search Console's Page indexing report after Google has had time to crawl. Submission and requests do not guarantee indexing or rankings.
+
+Google Search Console verification, GA4 installation, and Google Business Profile setup require access to the client's Google account and DNS/hosting. Never ask the client to share their Google password.
+
+---
+
 ## Step 1: Supabase Storage Bucket
 
 ### 1.1 Log in to Supabase
