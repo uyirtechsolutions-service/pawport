@@ -8,6 +8,11 @@ export default function sitemap() {
       priority: 1,
     },
     {
+      url: new URL('/about-us', siteUrl).toString(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: new URL('/services', siteUrl).toString(),
       changeFrequency: 'monthly',
       priority: 0.9,
@@ -21,6 +26,11 @@ export default function sitemap() {
       url: new URL('/stories', siteUrl).toString(),
       changeFrequency: 'monthly',
       priority: 0.7,
+    },
+    {
+      url: new URL('/contact', siteUrl).toString(),
+      changeFrequency: 'yearly',
+      priority: 0.6,
     },
   ]
 }

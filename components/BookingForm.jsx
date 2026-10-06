@@ -208,9 +208,9 @@ function BookingForm() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pawport-orange/20 text-pawport-orange rounded-full text-[11px] font-bold uppercase tracking-widest mb-2">
             <FontAwesomeIcon icon={faHeart} className="w-3 h-3" /> Book Now
           </span>
-          <h2 className="text-2xl font-extrabold tracking-tight font-space text-black mb-1">
-            Ready to move your best friend?
-          </h2>
+          <h1 className="text-2xl font-extrabold tracking-tight font-space text-black mb-1">
+            Book pet transport for your best friend
+          </h1>
           <p className="text-sm text-pawport-muted">3 simple steps. We'll send your booking via WhatsApp.</p>
         </div>
 

@@ -11,7 +11,7 @@ The Next.js site serves `/robots.txt` and `/sitemap.xml` automatically. Before d
 After deployment:
 
 1. Open `https://your-domain/robots.txt` and confirm it lists the sitemap and blocks `/api/`.
-2. Open `https://your-domain/sitemap.xml` and confirm it lists the homepage, services, process, and stories pages.
+2. Open `https://your-domain/sitemap.xml` and confirm it lists the homepage, About, services, process, stories, and contact pages.
 3. In Google Search Console, add and verify the domain property using its DNS TXT record. Make the client the owner and add your account as a full user.
 4. In Search Console, submit `sitemap.xml`, then inspect the homepage and `/services` and request indexing if they are not indexed.
 5. Check Search Console's Page indexing report after Google has had time to crawl. Submission and requests do not guarantee indexing or rankings.

@@ -11,6 +11,7 @@ export const metadata = {
 export default function ProcessPage() {
   return (
     <div>
+      <h1 className="px-6 pt-8 text-center text-3xl font-extrabold font-space text-black">How Pawport Pet Transport Works</h1>
       <Process />
     </div>
   )

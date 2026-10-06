@@ -2,14 +2,27 @@
 
 import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPaw, faEnvelope, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
+import { faPaw, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
-const footerLinks = {
-  Services: ['Pet Taxi', 'Ground Transport', 'Flight Relocation', 'International Moves'],
-  Company: ['Our Process', 'Our Fleet', 'Success Stories', 'About Us'],
-  Support: ['FAQ', 'Contact Us', 'Track Booking', 'Terms & Conditions'],
-}
+const footerLinks = [
+  {
+    category: 'Explore',
+    links: [
+      { label: 'About Us', href: '/about-us' },
+      { label: 'Services', href: '/services' },
+      { label: 'Our Process', href: '/process' },
+      { label: 'Success Stories', href: '/stories' },
+    ],
+  },
+  {
+    category: 'Get Started',
+    links: [
+      { label: 'Book Pet Transport', href: '/book' },
+      { label: 'Contact Us', href: '/contact' },
+    ],
+  },
+]
 
 function Footer() {
   const currentYear = new Date().getFullYear()
@@ -64,50 +77,23 @@ function Footer() {
                 >
                   <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
                 </a>
-                <a
-                  href="mailto:hello@pawport.in"
-                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/50 hover:bg-pawport-orange hover:text-white transition-all duration-300"
-                  aria-label="Email"
-                >
-                  <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4" />
-                </a>
               </div>
             </div>
 
             {/* Links Columns */}
-            {Object.entries(footerLinks).map(([category, links]) => (
+            {footerLinks.map(({ category, links }) => (
               <div key={category} className="col-span-1 md:col-span-2 lg:col-span-2 space-y-4">
                 <h4 className="font-space font-bold text-xs uppercase tracking-[0.15em] text-white/80">
                   {category}
                 </h4>
                 <ul className="space-y-2.5">
-                  {links.map((link) => (
-                    <li key={link}>
+                  {links.map(({ label, href }) => (
+                    <li key={label}>
                       <Link
-                        href={
-                          link === 'Pet Taxi'
-                            ? '/services'
-                            : link === 'Ground Transport'
-                            ? '/services'
-                            : link === 'Flight Relocation'
-                            ? '/services'
-                            : link === 'International Moves'
-                            ? '/services'
-                            : link === 'Our Process'
-                            ? '/process'
-                            : link === 'Our Fleet'
-                            ? '/#fleet'
-                            : link === 'Success Stories'
-                            ? '/stories'
-                            : link === 'About Us'
-                            ? '/#philosophy'
-                            : link === 'Track Booking'
-                            ? '/book'
-                            : '#'
-                        }
+                        href={href}
                         className="text-sm text-white/50 hover:text-pawport-orange transition-colors duration-200 inline-block py-0.5"
                       >
-                        {link}
+                        {label}
                       </Link>
                     </li>
                   ))}
@@ -133,18 +119,6 @@ function Footer() {
                       className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-white/30 group-hover:text-pawport-orange transition-colors"
                     />
                     <span>+91 90874 70137</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="mailto:hello@pawport.in"
-                    className="flex items-start gap-2.5 text-sm text-white/50 hover:text-pawport-orange transition-colors duration-200 group"
-                  >
-                    <FontAwesomeIcon
-                      icon={faEnvelope}
-                      className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-white/30 group-hover:text-pawport-orange transition-colors"
-                    />
-                    <span>hello@pawport.in</span>
                   </a>
                 </li>
                 <li>
